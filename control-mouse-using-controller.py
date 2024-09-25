@@ -7,6 +7,7 @@ game.joystick.init()
 
 count = game.joystick.get_count()
 joy_count = 0
+scroll_count = 0
 delay = 10
 sensitivity = 10
 pyautogui.FAILSAFE = False
@@ -34,6 +35,10 @@ else:
                     delay -= 1
                 elif event.button == 3:
                     delay += 1
+                elif event.button == 4:
+                    pyautogui.click(button="left")
+                elif event.button == 5:
+                    pyautogui.click(button="right")
                 elif event.button == 8:
                     sys.exit("exited")
 
@@ -42,11 +47,20 @@ else:
             x_axis = joystick.get_axis(0)
             y_axis = joystick.get_axis(1)
 
-            print(f"X: {x_axis}, Y: {y_axis}")
+            top_axis = joystick.get_axis(3)
+            bottom_axis = joystick.get_axis(4)
+
+            if top_axis > 0.1 and scroll_count % delay == 0:
+                pyautogui.scroll(-1 * sensitivity)
+            elif top_axis < 0.1 and scroll_count % delay == 0:
+                pyautogui.scroll(1 * sensitivity)
+
+            print(f"X: {top_axis}, Y: {bottom_axis}")
             if (abs(x_axis) > 0.1 or abs(y_axis) > 0.1) and joy_count % delay == 0:
                 dx = x_axis * sensitivity
                 dy = y_axis * sensitivity
                 pyautogui.moveRel(dx, dy)
                 print(f"Moved {dx}x, {dy}y")
             joy_count += 1
+            scroll_count += 1
 game.quit()
