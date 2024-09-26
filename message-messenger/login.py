@@ -1,6 +1,7 @@
 from selenium import webdriver
 import pickle
 import time
+import os
 
 # Initialize the WebDriver
 driver = webdriver.Chrome()
@@ -17,3 +18,5 @@ with open('cookies.pkl', 'wb') as file:
     pickle.dump(driver.get_cookies(), file)
 
 driver.quit()
+
+os.system("start message-messenger.py")

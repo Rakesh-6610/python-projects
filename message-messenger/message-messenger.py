@@ -12,76 +12,97 @@ import pyperclip
 
 load_dotenv()
 
-username = os.getenv("EMAIL")
-password = os.getenv("FACEBOOK_PASSWORD")
-recipient = "Rakesh Karmaker"
-messages = [
-    "Hello there",
-    "this message is just for testing purposes",  
-]
+
+def main():
+
+    messages_list = get_recipient_and_messages()
+    has_pin = True if (input("Do you have a secure storage PIN? (y/n): ").lower() == "y") else False 
+
+    driver = webdriver.Chrome()
+    driver.get('https://www.messenger.com/')
+
+    # Load cookies from the file
+    with open('cookies.pkl', 'rb') as file:
+        cookies = pickle.load(file)
+        for cookie in cookies:
+            driver.add_cookie(cookie)
+
+    # Refresh the page to log in with cookies
+    driver.refresh()
+    time.sleep(2)
 
 
-driver = webdriver.Chrome()
-driver.get('https://www.messenger.com/')
+    #use this if user has secure storage PIN
+    if has_pin:
+        cancel_pin(driver)
+    
+    #send message to each recipient
+    for recipient, messages in messages_list.items():
+        search_box = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.XPATH, '//input[@placeholder="Search Messenger"]'))
+        )
+
+        search_box.send_keys(recipient.split()[0])
+        search_box.send_keys(Keys.RETURN)
+        search_box.send_keys(Keys.RETURN)
+
+        select_user = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.XPATH, f'//ul//li[@role="option"]//span[contains(text(), "{recipient}")]'))
+        )
+        select_user.click()
+        time.sleep(2)
 
 
+        # Send the message
+        for message in messages:
+            pyperclip.copy(message)
+            message_box = WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.XPATH, '//div[@aria-label="Message"]'))
+            )
+            message_box.click()
+            message_box.send_keys(Keys.CONTROL + 'v')
+            message_box.send_keys(Keys.RETURN)
 
-# Load cookies from the file
-with open('cookies.pkl', 'rb') as file:
-    cookies = pickle.load(file)
-    for cookie in cookies:
-        driver.add_cookie(cookie)
-
-# Refresh the page to log in with cookies
-driver.refresh()
-time.sleep(2)
-
-
-
-
-# pin_box = driver.find_element( By.ID , "mw-numeric-code-input-prevent-composer-focus-steal")
-# pin_box.send_keys(os.getenv("FACEBOOK_PIN"))
-# while "Enter your PIN to restore your chat history" in driver.page_source:
-#     time.sleep(5)
-
-cancel_box = WebDriverWait(driver, 10).until(
-    EC.presence_of_element_located((By.XPATH, '//div[@aria-label="Close"]'))
-)
-cancel_box.click()
-dont_restore = WebDriverWait(driver, 10).until(
-    EC.presence_of_element_located((By.XPATH, '//div[@aria-label="Don\'t restore messages"]'))
-)
-dont_restore.click()
-
-
-
-search_box = WebDriverWait(driver, 10).until(
-    EC.presence_of_element_located((By.XPATH, '//input[@placeholder="Search Messenger"]'))
-)
-
-search_box.send_keys(recipient.split()[0])
-search_box.send_keys(Keys.RETURN)
-search_box.send_keys(Keys.RETURN)
-
-select_user = WebDriverWait(driver, 10).until(
-    EC.presence_of_element_located((By.XPATH, f'//ul//li[@role="option"]//span[contains(text(), "{recipient}")]'))
-)
-select_user.click()
-time.sleep(2)
+    # Close the browser
+    time.sleep(5)
+    driver.quit()   
 
 
 
-    # Send the message
-
-for message in messages:
-    pyperclip.copy(message)
-    message_box = WebDriverWait(driver, 10).until(
-        EC.presence_of_element_located((By.XPATH, '//div[@aria-label="Message"]'))
+def cancel_pin(driver):
+    cancel_box = WebDriverWait(driver, 10).until(
+        EC.presence_of_element_located((By.XPATH, '//div[@aria-label="Close"]'))
     )
-    message_box.click()
-    message_box.send_keys(Keys.CONTROL + 'v')
-    message_box.send_keys(Keys.RETURN)
+    cancel_box.click()
+    dont_restore = WebDriverWait(driver, 10).until(
+        EC.presence_of_element_located((By.XPATH, '//div[@aria-label="Don\'t restore messages"]'))
+    )
+    dont_restore.click()
 
-# Close the browser
-time.sleep(5)
-driver.quit()   
+def get_recipient_and_messages():
+    people_message = {}
+    while True:
+        recipient = input("Enter recipient (Full Name): ").title().strip()
+        if recipient == "":
+            break
+        messages = []
+        while True:
+            message = input("Enter message: ")
+            if message == "":
+                break
+            messages.append(message)
+        people_message[recipient] = messages
+    return people_message
+
+
+
+if __name__ == '__main__':
+    if "message-messenger" not in os.getcwd():
+        raise ValueError("This script must be run in the 'message-messenger' folder")
+    else:
+        if not os.path.exists('cookies.pkl'):
+            os.system("start login.py")
+        else:
+            main()
+
+
