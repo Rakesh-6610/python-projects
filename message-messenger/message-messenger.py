@@ -15,8 +15,10 @@ load_dotenv()
 
 def main():
 
-    messages_list = get_recipient_and_messages()
-    has_pin = True if (input("Do you have a secure storage PIN? (y/n): ").lower() == "y") else False 
+    # messages_list = get_recipient_and_messages()
+
+    # has_pin = True if (input("Do you have a secure storage PIN? (y/n): ").lower() == "y") else False 
+    has_pin = True
 
     driver = webdriver.Chrome()
     driver.get('https://www.messenger.com/')
@@ -38,19 +40,8 @@ def main():
     
     #send message to each recipient
     for recipient, messages in messages_list.items():
-        search_box = WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.XPATH, '//input[@placeholder="Search Messenger"]'))
-        )
+        select_user(driver, recipient)
 
-        search_box.send_keys(recipient.split()[0])
-        search_box.send_keys(Keys.RETURN)
-        search_box.send_keys(Keys.RETURN)
-
-        select_user = WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.XPATH, f'//ul//li[@role="option"]//span[contains(text(), "{recipient}")]'))
-        )
-        select_user.click()
-        time.sleep(2)
 
 
         # Send the message
@@ -61,11 +52,40 @@ def main():
             )
             message_box.click()
             message_box.send_keys(Keys.CONTROL + 'v')
-            message_box.send_keys(Keys.RETURN)
+        #     message_box.send_keys(Keys.RETURN)
 
     # Close the browser
     time.sleep(5)
     driver.quit()   
+
+
+def select_user(driver, name):
+        
+        while True:
+            search_box = WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.XPATH, '//input[@placeholder="Search Messenger"]'))
+            )
+
+            search_box.send_keys((" ").join(name.split()[:-1]))
+            search_box.send_keys(Keys.RETURN)
+            search_box.send_keys(Keys.RETURN)
+
+            time.sleep(1)
+            selected_user = WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.XPATH, f'//ul//li[@role="option"]//span[contains(text(), "{name}")]'))
+            )
+            time.sleep(1)
+            selected_user.click()
+            time.sleep(3)
+
+            try:
+                user_heading = WebDriverWait(driver, 10).until(
+                    EC.presence_of_element_located((By.XPATH, f'//h2[@dir="auto"]//span[@dir="auto"]//span[contains(text(), "{name}")]'))
+                )
+                return True
+            except:
+                select_user(driver, name)
+
 
 
 
