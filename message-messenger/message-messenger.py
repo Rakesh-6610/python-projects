@@ -112,7 +112,7 @@ def get_recipient_and_messages():
             break
         messages = []
         while True:
-            message = input("Enter message: ")
+            message = input("Enter message: ").strip()
             if message == "":
                 break
             messages.append(message)
