@@ -15,10 +15,9 @@ load_dotenv()
 
 def main():
 
-    # messages_list = get_recipient_and_messages()
+    messages_list = get_recipient_and_messages()
 
-    # has_pin = True if (input("Do you have a secure storage PIN? (y/n): ").lower() == "y") else False 
-    has_pin = True
+    has_pin = True if (input("Do you have a secure storage PIN? (y/n): ").lower() == "y") else False 
 
     driver = webdriver.Chrome()
     driver.get('https://www.messenger.com/')
@@ -40,9 +39,10 @@ def main():
     
     #send message to each recipient
     for recipient, messages in messages_list.items():
-        select_user(driver, recipient)
-
-
+        #select user
+        has_selected = select_user(driver, recipient)
+        if not has_selected:
+            raise SystemError("Inserted username couldn't be found")
 
         # Send the message
         for message in messages:
@@ -52,7 +52,7 @@ def main():
             )
             message_box.click()
             message_box.send_keys(Keys.CONTROL + 'v')
-        #     message_box.send_keys(Keys.RETURN)
+            message_box.send_keys(Keys.RETURN)
 
     # Close the browser
     time.sleep(5)
@@ -60,7 +60,7 @@ def main():
 
 
 def select_user(driver, name):
-        
+        loop_count = 0
         while True:
             search_box = WebDriverWait(driver, 10).until(
                 EC.presence_of_element_located((By.XPATH, '//input[@placeholder="Search Messenger"]'))
@@ -85,6 +85,10 @@ def select_user(driver, name):
                 return True
             except:
                 select_user(driver, name)
+            finally:
+                if loop_count > 10:
+                    return False
+                loop_count += 1
 
 
 
@@ -100,6 +104,7 @@ def cancel_pin(driver):
     dont_restore.click()
 
 def get_recipient_and_messages():
+    print("Please enter the recipient name and messages sent to him. If not press 'enter'")
     people_message = {}
     while True:
         recipient = input("Enter recipient (Full Name): ").title().strip()
