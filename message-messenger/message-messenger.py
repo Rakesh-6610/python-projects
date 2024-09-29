@@ -15,10 +15,13 @@ load_dotenv()
 
 def main():
 
+    #Get recipient and messages
     messages_list = get_recipient_and_messages()
 
+    #Check if the user has a secure storage PIN
     has_pin = True if (input("Do you have a secure storage PIN? (y/n): ").lower() == "y") else False 
 
+    #Open chrome
     driver = webdriver.Chrome()
     driver.get('https://www.messenger.com/')
 
